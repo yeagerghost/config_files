@@ -1,6 +1,8 @@
 set hlsearch
 colorscheme koehler
 
+" Used after copy and pasting current outbox versions from Nagios web into VIM.  This will then
+" Generate the relevant lines to be added to the outbox-versions.conf file on Nagios server
 let @a=':%s/^.*Outbox-Versions_//g
 :%s/\t.*got /=/g
 :%s/ (.*$//g
