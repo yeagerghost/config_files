@@ -6,12 +6,12 @@ vnoremap <C-c> "+y
 " Used after copy and pasting current outbox versions from Nagios web into VIM.  This will then
 " Generate the relevant lines to be added to the outbox-versions.conf file on Nagios server
 " let @a=':%s/^.*Outbox-Versions_//g
-:%s/\t.*got /=/g
-:%s/ (.*$//g
-:%s/\t.*$/=/g
-:%s/invlib4/invserve/g
-:%s/kjgjhgjhgjhgj//g
-'
+":%s/\t.*got /=/g
+":%s/ (.*$//g
+":%s/\t.*$/=/g
+":%s/invlib4/invserve/g
+":%s/kjgjhgjhgjhgj//g
+"'
 function OBversions()
   :%s/^.*Outbox-Versions_//g
   :%s/\t.*got /=/g
