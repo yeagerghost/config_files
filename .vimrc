@@ -3,6 +3,10 @@ set hlsearch
 colorscheme koehler
 vnoremap <C-c> "+y
 
+let mapleader = ","
+
+map <Leader>i :call InvJournal()<CR>
+
 " Used after copy and pasting current outbox versions from Nagios web into VIM.  This will then
 " Generate the relevant lines to be added to the outbox-versions.conf file on Nagios server
 " let @a=':%s/^.*Outbox-Versions_//g
