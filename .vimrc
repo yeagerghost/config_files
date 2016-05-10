@@ -3,9 +3,15 @@ set hlsearch
 colorscheme koehler
 vnoremap <C-c> "+y
 
+set directory+=C:\Users\kmcneil.ADAXSCOM\Tempstuff\VIMTEMP
+
 let mapleader = ","
 
+map <Leader>co :call COrders()<CR>
 map <Leader>i :call InvJournal()<CR>
+map <Leader>op :call GenOpens()<CR>
+map <Leader>da :%d<CR>
+map <Leader>d :1,$t$<CR>
 
 " Used after copy and pasting current outbox versions from Nagios web into VIM.  This will then
 " Generate the relevant lines to be added to the outbox-versions.conf file on Nagios server
@@ -32,11 +38,15 @@ endfunction
 
 "  Assumes buffer contains erroneous output of test-events ran on bfox server
 "  Function then generates the first select statements call the TMSales function
-"  Next the function duplicates the select 
+"  Next the function duplicates the select separated START and END sections.
+"  This is used as a base to create necessary queries or other need scripts
+"  SECTIONNAME and END-SECTIONNAME used because when using <SECTIONNAME> and <ENDSECTIONNAME>
+"  SECTIONNAME is a substring of ENDSECTIONNAME which leads to problems
 function InvJournal()
   :call TMSales()
   :1s/^.*/===========================START===========================\r&/
   :$s/^.*/&\r===========================END===========================/
+  :/==START==/,/==END==/g/.*/t$ " Use /<range start>/,/<range end>/g/<pattern>/t$ to place contents between range at end of file 
   :/==START==/,/==END==/g/.*/t$  
   :/==START==/,/==END==/g/.*/t$  
   :/==START==/,/==END==/g/.*/t$
@@ -45,6 +55,10 @@ function InvJournal()
   :s/START/TMSALES/
   /END
   :s/END/END-TM-SALES/
+  /START
+  :s/START/ITEMSEATS/
+  /END
+  :s/END/END-ITEM-SEATS/
   /START
   :s/START/GETINVSEATS/
   /END
@@ -57,9 +71,11 @@ function InvJournal()
   :s/START/GENOPENS/
   /END
   :s/END/END-GEN-OPENS/
+  :call SItemSeats()
   :call GetInvseats()
   :call SInvseats()
   :/GENOPENS/+1,/END-GEN-OPENS/-1s/union/order by journalkey/g
+  :$s/\n/\rcut -f 3 -d ',' seats_in_question\rcut -f 5 -d ',' seats_in_question\r/
 endfunction
 
 " Assumes buffer contains select * from customerorder where orderkey in ('list','of','orderkeys')
@@ -96,9 +112,16 @@ endfunction
 "endfunction
 function GenOpens()
   :/GENOPENS/+1,/END-GEN-OPENS/-1s/select \* /select prodCode, seat, oldRest, 0, 'OPEN' /g
-  :/GENOPENS/+1,/END-GEN-OPENS/-1s/union/and journalkey >= /g
   :/GENOPENS/+1,/END-GEN-OPENS/-1s/order by journalkey/and journalkey >= /g
   :/GENOPENS/+1,/END-GEN-OPENS/-2s/$/ union/
+endfunction
+
+" Assumes buffer contains select * from invjournal where prodcode='XXX' and seat in ('seat','list') union 
+" Function changes the query to be on itemseat instead of invjournal
+function SItemSeats()
+  :/ITEMSEATS/+1,/END-ITEM-SEATS/-1s/invjournal/itemseat/g
+  :/ITEMSEATS/+1,/END-ITEM-SEATS/-1s/prodcode/eventcode/g
+  :/ITEMSEATS/+1,/END-ITEM-SEATS/-1s/journalkey/itemseatkey/g
 endfunction
 
 
@@ -128,7 +151,7 @@ function SInvseats()
   :/SINVSEATS/+1,/END-SINV-SEATS/-1s/prodcode=//g
   :/SINVSEATS/+1,/END-SINV-SEATS/-1s/$/.seats/g
   :/SINVSEATS/s/.*/&\r{/
-  :/END-SINV-SEATS/s/.*/} > seats_in-question\r&/
+  :/END-SINV-SEATS/s/.*/} > seats_in_question\r&/
 endfunction
 
 " Assumes the buffer contains the output from a freshdesk test events for missing sales
@@ -179,3 +202,59 @@ function TMSales()
   :$s/$/ order by journalkey
 endfunction
 
+
+"  Assumes the buffer contains the failure from sftp or ftp logs in the form of
+"  Date - Info - Uploading file <localfile> to <remotefile>
+"  Function attempts to break down input into lcd, cd and put commands for batch processing
+function TSftp ()
+  :%s/^.*Uploading /Uploading /g
+  :%s/ to /\r/g
+  :%s/^Uploading.*$/\r&/g
+  :%s/\/AEG_.*/\r&/g
+  :%s/\/Prod.*/\r&/g
+  :%s/^\///g
+  :%s/'sftp.*22/&\r/g
+  :%s/'ftp.*21/&\r/g
+  :%s/^Uploading file '/lcd '/g
+  :%s/\.$//g
+  :%s/'$//g
+  :%s/^lcd.*/&'/g
+  :%s/^\//cd '\//g
+  :%s/^cd.*/&\/'/g
+  :%s/.*.txt\n\n/put &/g
+  :%s/.*.csv\n\n/put &/g
+  :$s/.*/put &/g
+  :g/^Prod/d
+  :g/^AEG/d
+  :1g/^$/d
+  :2g/.*/t$
+  :1,$-1g/.*ftp.*/d
+endfunction
+
+
+"  Assumes the buffer contains the failure from ftp logs in the form of
+"  Date - Info - Uploading file <localfile> to <remotefile>
+"  Function attempts to break down input into lcd, cd and put commands for batch processing
+function TFtp ()
+  :%s/^.*Uploading /Uploading /g
+  :%s/ to /\r/g
+  :%s/^Uploading.*$/\r&/g
+  :%s/\/AEG_.*/\r&/g
+  :%s/\/Prod.*/\r&/g
+  :%s/^\///g
+  :%s/'ftp.*21/&\r/g
+  :%s/^Uploading file '/lcd '/g
+  :%s/\.$//g
+  :%s/'$//g
+  :%s/^lcd.*/&'/g
+  :%s/^\//cd '\//g
+  :%s/^cd.*/&\/'/g
+  :%s/.*.txt\n\n/put &/g
+  :%s/.*.csv\n\n/put &/g
+  :$s/.*/put &/g
+  :g/^Prod/d
+  :g/^AEG/d
+  :1g/^$/d
+  :2g/.*/t$
+  :1,$-1g/.*sftp.*/d
+endfunction
