@@ -12,6 +12,7 @@ map <Leader>i :call InvJournal()<CR>
 map <Leader>op :call GenOpens()<CR>
 map <Leader>da :%d<CR>
 map <Leader>d :1,$t$<CR>
+map <Leader>ane /A$AP Ferg & Tory Lanez WME Counts.*\\|Chrisette Michele Agent Counts.*\\|Dawes Agent Counts.*\\|Jim Breuer Counts.*\\|Josh Ritter Jamplify Counts.*\\|Magic Men Counts.*\\|MattyB AEG Audit.*\\|MattyB Agent Counts.*\\|Pete Davidson Agency Afternoon Counts.*\\|Pete Davidson Agency Morning Counts.*\\|PressPlayDetroit Agent Count.*\\|PressPlayDetroit Audit.*\\|RuPaul NYC Counts.*\\|RuPaul VIP Audit.*\\|Sturgill Simpson Agent Counts.*\\|Tegan and Sara Agent Counts.*\\|Todrick Hall Agent Counts.*
 
 " Used after copy and pasting current outbox versions from Nagios web into VIM.  This will then
 " Generate the relevant lines to be added to the outbox-versions.conf file on Nagios server
@@ -257,4 +258,12 @@ function TFtp ()
   :1g/^$/d
   :2g/.*/t$
   :1,$-1g/.*sftp.*/d
+endfunction
+
+
+"  Assumes buffer contains copy and paste from results of ANE scheduled reports page
+"  Function gets rid of clutter
+function ModANEresults()
+  :%g/^   View Results      $/d
+  :%g/^Chart Debug$/d
 endfunction
