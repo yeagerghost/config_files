@@ -261,9 +261,9 @@ function TFtp ()
 endfunction
 
 
-"  Assumes buffer contains copy and paste from results of ANE scheduled reports page
+"  Assumes buffer contains copy and paste from results of scheduled reports page
 "  Function gets rid of clutter
-function ModANEresults()
+function ModSchdResults()
   :%g/^   View Results      $/d
   :%g/^Chart Debug$/d
 endfunction
