@@ -37,6 +37,21 @@ function Sqline()
   :%s/,$//g
 endfunction
 
+" Convert url to ISS Code
+" ISS code comes between waiting room like so wr=<ISS CODE>&SOMEETHING
+" Cut out wr=ISS CODE&
+" Then Delete wr= and &
+function Url2Wr()
+  :%s/.*/&\rxXxXxXxXxX&
+  :$s/$/\r==========STARTISS==========
+  :g/^xXxXxXxXxX.*/m$
+  :$s/$/\r==========ENDISS==========
+  :%g/^$/d
+  :/==STARTISS==/,/==ENDISS==/s/.*\(wr=.*&\).*/\1/g
+  :/==STARTISS==/,/==ENDISS==/s/&.*//g
+  :/==STARTISS==/,/==ENDISS==/s/wr=//g
+endfunction
+
 "  Assumes buffer contains erroneous output of test-events ran on bfox server
 "  Function then generates the first select statements call the TMSales function
 "  Next the function duplicates the select separated START and END sections.
@@ -76,7 +91,7 @@ function InvJournal()
   :call GetInvseats()
   :call SInvseats()
   :/GENOPENS/+1,/END-GEN-OPENS/-1s/union/order by journalkey/g
-  :$s/\n/\rcut -f 3 -d ',' seats_in_question\rcut -f 5 -d ',' seats_in_question\r/
+  :$s/\n/\rvi test; chmod 700 test; .\/test; cut -f 3 -d ',' seats_in_question; cut -f 5 -d ',' seats_in_question\r\rvi open-seats; importinv.py inv open-seats;\/opt\/outbox\/nagios-active-plugins\/bin\/run-nagios-active-plugin obt_check_jmon.py -c 60 test-events\r/
 endfunction
 
 " Assumes buffer contains select * from customerorder where orderkey in ('list','of','orderkeys')
@@ -197,6 +212,7 @@ function TMSales()
   :%s/ XXXXXXXX/\r/g
   :%g/^.$/d
   :%s/AssertionError: Missing sales: DB([0-9]\{1,3})/ and seat in /g
+  :%s/AssertionError: Missing reservations: DB([0-9]\{1,3})/ and seat in /g
   :%s/\[/(/g
   :%s/\]/)/g
   :1,$-1s/$/ union/g
