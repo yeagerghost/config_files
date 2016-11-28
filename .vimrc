@@ -37,6 +37,12 @@ function Sqline()
   :%s/,$//g
 endfunction
 
+" Recapcha requests with ISS codes on single lines
+" Replace newlines from line 1 to second to last line with commas
+function Cappify()
+   :1,$-1s/\n/,/g
+endfunction
+
 " Convert url to ISS Code
 " ISS code comes between waiting room like so wr=<ISS CODE>&SOMEETHING
 " Cut out wr=ISS CODE&
@@ -257,6 +263,8 @@ function TFtp ()
   :%s/ to /\r/g
   :%s/^Uploading.*$/\r&/g
   :%s/\/AEG_.*/\r&/g
+  :%s/\/Houston_.*/\r&/g
+  :%s/\/TropLV.*/\r&/g
   :%s/\/Prod.*/\r&/g
   :%s/^\///g
   :%s/'ftp.*21/&\r/g
@@ -282,4 +290,30 @@ endfunction
 function ModSchdResults()
   :%g/^   View Results      $/d
   :%g/^Chart Debug$/d
+endfunction
+
+"  Assumes buffer contains 'paste' of patterns and matches
+"  Functions takes buffer and converts to a sed script that will highlight checks in 
+"  Outbox versions copy and paste from nagios (copy and paste converted to html by vim)
+function GenVerSed1()
+  :%s/\t/\t-/
+  :%s/$/-/
+  :%s/^/s\/got /
+  :%s/\t/\/got <font color="green">/g
+  :%s/$/<\\\/font>\// 
+endfunction
+
+
+"  Assumes buffer contains 'paste' of patterns and matches
+"  Functions takes buffer and converts to a sed script that will highlight non compliant checks
+"  Outbox versions copy and paste from nagios (copy and paste converted to html by vim)
+function GenVerSed2()
+  :%s/\(^.*-\)\([0-9].*\)\(\t\)\(.*\)/s\/got \1\\(.* \\)\/got <font color="yellow">\1\\1 [\4]<\\\/font>\/
+endfunction
+
+"  Assumes buffer contains 'paste' of patterns and matches
+"  Functions takes buffer and converts to a sed script that will change previous green only checks to full versions
+"  Outbox versions copy and paste from nagios (copy and paste converted to html by vim)
+function GenVerSed3()
+  :%s/\(^.*\)\(\t\)\(.*\)/s\/-\3-\/\1 [\3]\//
 endfunction
